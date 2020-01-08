@@ -1,0 +1,51 @@
+$ip_scanner = '172.16.16.2'
+$ip_vulnerable = ENV['IP_VULNERABLE']
+#$ip_vulnerable = '172.16.16.3'
+#puts ip_vulnerable
+
+$script = <<-SCRIPT
+echo I am provisioning...
+loadkeys de
+cd .
+mkdir provisioning
+cd provisioning
+touch worked.txt
+SCRIPT
+
+$scan = <<-SCRIPT
+echo Starting a nmap scan
+apt-get install nmap --assume-yes
+mkdir nmap
+nmap -sC -sV -oA nmap/nmap_scan_results #$ip_vulnerable
+cd nmap
+cp -u nmap_scan_results.nmap /vagrant/nmap_scan_results.nmap
+SCRIPT
+
+#Start Vagrant process
+Vagrant.configure("2") do |config|
+  config.vm.provision "shell", inline: "echo Hello World this should happen on both machines"
+  config.vm.provision "shell", inline: "echo Configuring network via dhcp"
+  
+  #Creates a network for all created machines with DHCP
+  #config.vm.network "private_network", type: "dhcp"
+
+	config.vm.define "vulnerable" do |vulnerable|
+	#vulnerable.vm.box = "ubuntu/trusty64"
+	vulnerable.vm.box = "rapid7/metasploitable3-ub1404"
+	vulnerable.vm.box_version = "0.1.12-weekly"
+	vulnerable.vm.network "private_network", ip: $ip_vulnerable
+	vulnerable.vm.provision "shell", inline: $script
+	end
+	
+	config.vm.define "scanner" do |scanner|
+	scanner.vm.box = "ubuntu/trusty64"
+	scanner.vm.network "private_network", ip: "#{ENV['IP_SCANNER']}"
+	scanner.vm.provision "shell", inline: $script
+	#scanner.info = "$script"
+	# Install nmap and perform a scan against vulnerable.
+	scanner.trigger.after :provision do |scan|
+		scan.info = "got here"
+		end
+	scanner.vm.provision "shell", inline: $scan
+	end	
+end

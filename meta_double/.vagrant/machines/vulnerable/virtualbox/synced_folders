@@ -1,0 +1,1 @@
+{"virtualbox":{"/home/vagrant":{"create":true,"guestpath":"/home/vagrant","hostpath":"C:/Users/robin/Desktop/meta_double/Sync","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"C:/Users/robin/Desktop/meta_double","disabled":false,"__vagrantfile":true}}}
