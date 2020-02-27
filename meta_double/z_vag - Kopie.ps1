@@ -86,11 +86,8 @@ $env:SCANNER_PROVISIONING = "scanner_provisioning.sh"
 $env:VULNERABLE_PROVISIONING = "vulnerable_provisioning.sh"
 $env:PATH_VULNERABLE_SYNC = "/home/vagrant"
 $env:PATH_SCANNER_SYNC = "/home/vagrant"
-
-# Build the vagrantfile and set the output encoding to utf8
-$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
-#$OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
-Get-Content .\env_vagrantfile.sh | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > Vagrantfile
+$env:IP_SCANNER = "172.16.16.2"
+$env:IP_VULNERABLE = "172.16.16.3"
 
 # Script for starting vagrant 
 Write-Host "Start vagrant process"
@@ -98,13 +95,19 @@ $StartMs = (Get-Date).Minute
 $vagrantfile_path = Read-Host -Prompt 'Enter Vagrantfile path leave empty if this directory should be taken: '
 
 if ($vagrantfile_path -eq ""){
-    echo "true"
-    $env:IP_SCANNER = "172.16.16.2"
+    echo "true"  
     $ip_scanner = $env:IP_SCANNER
+    echo ("The Scanner IP-Address  is: " + $ip_scanner)   
+    $ip_vulnerable = $env:IP_VULNERABLE	
+	
+	# Build the Vagrantfile and set the output encoding to utf8
+	$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+	#$OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
+	Get-Content .\env_vagrantfile.sh | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > Vagrantfile
 
-    echo ("The Scanner IP-Address  is: " + $ip_scanner)
-    $env:IP_VULNERABLE = "172.16.16.3"
-    $ip_vulnerable = $env:IP_VULNERABLE
+	# Expand Provisioning files:
+	Get-Content .\env_scanner_provisioning.sh | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > $env:SCANNER_PROVISIONING
+
 	if ($mode -eq "up"){
 	
     vagrant up
@@ -119,6 +122,7 @@ if ($vagrantfile_path -eq ""){
 else {
     echo "false"
 }
+
 
 $EndMs = (Get-Date).Minute
 Write-Host "This script took $($EndMs - $StartMs) minutes to run and now destroys the machines"
