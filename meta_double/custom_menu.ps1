@@ -101,7 +101,7 @@ function Base-Menu
     }
 }
 
-# Starts the scanner menu ...
+# Starts the scanner menu 
 function Scanner-Menu
 {
      param (
