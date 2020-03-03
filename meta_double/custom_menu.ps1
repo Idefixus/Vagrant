@@ -4,8 +4,8 @@ param (
 [String]$mode 
 )
 
-[String[]] $scanner_names = "ubuntu/trusty64", "openvas-packer-debian.virtualbox.box", "blank"
-[String[]] $vulnerable_names = "rapid7/metasploitable3-ub1404", "ubuntu/trusty64", "hashicorp/precise64"
+[String[]] $global:scanner_names = "ubuntu/trusty64", "openvas-packer-debian.virtualbox.box", "blank"
+[String[]] $global:vulnerable_names = "rapid7/metasploitable3-ub1404", "ubuntu/trusty64", "hashicorp/precise64"
 [String[]] $global:box_scanner = @()
 [String[]] $global:box_vulnerable = @()
 # Fill the current working directory with the current path
@@ -55,36 +55,38 @@ function Base-Menu
             Scan-Start
         }
         '4' {
-            
-            "Get the scan results (TODO: List all past scans and give the options to view the results)"
+            Results-Menu
         }
 		'5' {
-			$custom_box = Read-Host -Prompt "Add the link to the custom box or enter "" for the hardcoded version"
-			if ($custom_box -eq ""){
+            # Add a custom box
+			$my_custom_box = Read-Host -Prompt "Add the link to the custom box or enter "" for the hardcoded version"
+			if ($my_custom_box -eq ""){
 				Write-Host "The hardcoded version has been chosen. The path is: $global:custom_box"
 			}
 			else {
-				Write-Host "The new box can be found at $custom_box"
-				$global:custom_box = $custom_box
+				Write-Host "The new box can be found at $my_custom_box"
+				$global:custom_box = $my_custom_box
 			}
 			$name_custom_box = Read-Host -Prompt "Add the name of the new box"
 			$type_custom_box = Read-Host -Prompt "Set the mode: Either Scaner Box (type: scanner) or Vulnerable Box (type: vulnerable) or both (type: both) if you want to abort type '' "
 			# Finally add the new box
+        Write-Host $global:custom_box
+        Write-Host $name_custom_box
 			vagrant box add $global:custom_box --name $name_custom_box
 			
 			# Add box to scanners list or vulnerable list or both
 			if ($type_custom_box -eq "scanner"){
-                Write-Host $scanner_names
+                Write-Host $global:scanner_names
                 Write-Host $name_custom_box				
-                $scanner_names += $name_custom_box
-                Write-Host $scanner_names
+                $global:scanner_names += $name_custom_box
+                Write-Host $global:scanner_names
 			}
 			elseif ($type_custom_box -eq "vulnerable"){
-				$vulnerable_names += $custom_box
+				$global:vulnerable_names += $my_custom_box
 			}
 			elseif ($type_custom_box -eq "both") {
-				$scanner_names += $custom_box
-				$vulnerable_names += $custom_box
+				$global:scanner_names += $my_custom_box
+				$global:vulnerable_names += $my_custom_box
 			}
 			elseif ($type_custom_box -eq ""){
 			Base-Menu
@@ -101,6 +103,30 @@ function Base-Menu
     }
 }
 
+# The Results menu
+function Results-Menu
+{
+    $child_names = Get-ChildItem -Path . -Name
+    $scanResults = @()
+    foreach($child in $child_names){
+        $index = [array]::IndexOf($child_names,$child)
+        #TODO: Do nicer... I hate arrays
+        $index -= 1
+        if ($child -match "\b(Scan_[1-9]([0-9])?([0-9])?)\b"){
+            $scanResults += $child
+            Write-Host "[$index] $child"
+        }
+    }
+    Write-Host $scanResults
+    $input = Read-Host -Prompt "Choose a Scan to get the results from."
+
+        Write-Host $scanResults[$input]
+        # TODO: Inline doesnt work. Fix it
+        $value = $scanResults[$input]
+        Invoke-Item -Path ".\$value"
+
+}
+
 # Starts the scanner menu 
 function Scanner-Menu
 {
@@ -109,21 +135,21 @@ function Scanner-Menu
      )
      
      Write-Host "================ $Title ================"
-     for ($i=1; $i -le $scanner_names.Count; $i++) {
-     Write-Host $i": "$($scanner_names[$i-1])
+     for ($i=1; $i -le $global:scanner_names.Count; $i++) {
+     Write-Host $i": "$($global:scanner_names[$i-1])
      }
-     Write-Host $($scanner_names.Count+1)": Press $($scanner_names.Count+1) to return to the menu."
+     Write-Host $($global:scanner_names.Count+1)": Press $($global:scanner_names.Count+1) to return to the menu."
      $scanner = Read-Host
    #  $scanner = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyUp')
 
-        if ([int]$scanner -le $scanner_names.Count -and [int]$scanner -gt -1) {   
+        if ([int]$scanner -le $global:scanner_names.Count -and [int]$scanner -gt -1) {   
             
-            "You chose the $($scanner_names[$scanner-1]) scanner"
-            $global:box_scanner += $($scanner_names[$scanner-1])
+            "You chose the $($global:scanner_names[$scanner-1]) scanner"
+            $global:box_scanner += $($global:scanner_names[$scanner-1])
             
             Base-Menu
         }
-        elseif ([int]$scanner -eq $($scanner_names.Count+1)){
+        elseif ([int]$scanner -eq $($global:scanner_names.Count+1)){
             
             Base-Menu
         }
@@ -143,21 +169,21 @@ function Vulnerable-Menu
      )
      
      Write-Host "================ $Title ================"
-     for ($i=1; $i -le $vulnerable_names.Count; $i++) {
-     Write-Host $i": "$($vulnerable_names[$i-1])
+     for ($i=1; $i -le $global:vulnerable_names.Count; $i++) {
+     Write-Host $i": "$($global:vulnerable_names[$i-1])
      }
-     Write-Host $($vulnerable_names.Count+1)": Press $($vulnerable_names.Count+1) to return to the menu."
+     Write-Host $($global:vulnerable_names.Count+1)": Press $($global:vulnerable_names.Count+1) to return to the menu."
      $vulnerable = Read-Host
    #  $vulnerable = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyUp')
 
-        if ([int]$vulnerable -le $vulnerable_names.Count -and [int]$vulnerable -gt -1) {   
+        if ([int]$vulnerable -le $global:vulnerable_names.Count -and [int]$vulnerable -gt -1) {   
             
-            "You chose the $($vulnerable_names[$vulnerable-1]) vulnerable"
-            $global:box_vulnerable += $($vulnerable_names[$vulnerable-1])
+            "You chose the $($global:vulnerable_names[$vulnerable-1]) vulnerable"
+            $global:box_vulnerable += $($global:vulnerable_names[$vulnerable-1])
             
             Base-Menu
         }
-        elseif ([int]$vulnerable -eq $($vulnerable_names.Count+1)){
+        elseif ([int]$vulnerable -eq $($global:vulnerable_names.Count+1)){
             
             Base-Menu
         }
@@ -218,7 +244,8 @@ function Bootstrap ($current_scanner, $current_vulnerable, $counter)
     vagrant box add $current_vulnerable
     vagrant box add $current_scanner
 
-    vagrant up
+    # Virtualbox as dependency
+    vagrant up --provider virtualbox
     # Destroy the machines for purity and limitation of ssh errors and ip collisions
     vagrant destroy -f
 # Create Result folders
