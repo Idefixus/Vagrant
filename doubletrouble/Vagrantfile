@@ -1,6 +1,6 @@
 $ip_scanner = '172.16.16.2'
-$ip_vulnerable = ENV['IP_VULNERABLE']
-#$ip_vulnerable = '172.16.16.3'
+#$ip_vulnerable = ENV['IP_VULNERABLE']
+$ip_vulnerable = '172.16.16.3'
 #puts ip_vulnerable
 
 $script = <<-SCRIPT
@@ -39,8 +39,10 @@ Vagrant.configure("2") do |config|
 	
 	config.vm.define "scanner" do |scanner|
 	scanner.vm.box = "ubuntu/trusty64"
-	scanner.vm.network "private_network", ip: "#{ENV['IP_SCANNER']}"
+	scanner.vm.network "private_network", ip: $ip_vulnerable
 	scanner.vm.provision "shell", inline: $script
+	scanner.vm.provision "file", source: "./test.txt", destination: "/home/vagrant/"
+
 	#scanner.info = "$script"
 	# Install nmap and perform a scan against vulnerable.
 	scanner.trigger.after :provision do |scan|

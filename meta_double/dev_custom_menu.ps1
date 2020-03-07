@@ -4,19 +4,10 @@ param (
 [String]$mode 
 )
 
-
-# Scanner configs: All have to be the same length
 [String[]] $global:scanner_names = "ubuntu/trusty64", "openvas-packer-debian.virtualbox.box", "blank"
 #[String[]] $global:scanner_config = @(("ubuntu/trusty64", "openvas-packer-debian.virtualbox.box", "blank"),("Ubuntu", "Debian", "unknown"))
-$global:scanner_types = "Ubuntu", "Debian", ""
-$global:scanner_provisioning = "", "", ""
-
-# Vulnerable configs
 [String[]] $global:vulnerable_names = "rapid7/metasploitable3-ub1404", "ubuntu/trusty64", "hashicorp/precise64"
 #[String[]] $global:vulnerable_config = @(("rapid7/metasploitable3-ub1404", "ubuntu/trusty64", "hashicorp/precise64"),("Ubuntu", "Ubuntu", "Ubuntu"))
-$global:vulnerable_types = "Ubuntu", "Ubuntu", "Ubuntu"
-$global:vulnerable_provisioning = "", "", ""
-
 [String[]] $global:box_scanner = @()
 [String[]] $global:box_vulnerable = @()
 # Fill the current working directory with the current path
@@ -155,32 +146,24 @@ function Scanner-Menu
 
         if ([int]$scanner -le $global:scanner_names.Count -and [int]$scanner -gt -1) {   
             
-            Write-Host "You chose the $($global:scanner_names[$scanner-1]) scanner"
-            Write-Host "This is a $($global:scanner_types[$scanner-1])"
+            "You chose the $($global:scanner_names[$scanner-1]) scanner"
             #"You chose the $($global:scanner_config[0][$scanner-1]) scanner, this is a $($global:scanner_config[1][$scanner-1])"
             $global:box_scanner += $($global:scanner_names[$scanner-1])
-            $machine_type = $($global:scanner_types[$scanner-1])
+            $machine_type = $($global:scanner_config[1][$scanner-1])
             Write-Host "Choose a use-case (scan configuration)"
-            #$type = Read-Host -Prompt "Type the OS of the chosen machine (Windows, Ubuntu, Debian) to see all possible configuration scripts for different scans. Choose "" for a default scan"
-            if ($machine_type -eq ""){
+            $type = Read-Host -Prompt "Type the OS of the chosen machine (Windows, Ubuntu, Debian) to see all possible configuration scripts for different scans. Choose "" for a default scan"
+            if ($type -eq ""){
             Write-Host "You chose a default script"
             } 
             else {
                 # TODO: Check type of input
-                $fitting_scripts = Get-ChildItem -Path ".\provisioning\$machine_type\*.sh" -Name
-                Write-Host "Fitting: "$fitting_scripts
+                $fitting_scripts = Get-ChildItem -Path ".\provisioning\$type\*.sh"
                 for ($i=1; $i -le $fitting_scripts.Count; $i++) {
-                    Write-Host $i" : "$($fitting_scripts[$i-1])
-                    Write-Host "I got here." 
+                    Write-Host $i" : "$($fitting_scripts[$i-1]) 
                 }
                 [int]$chosen = Read-Host -Prompt "Choose a script"
                 $path_custom_scanner_provisioning_script = $($fitting_scripts[$chosen-1])
-                Write-Host "The chosen script is: "$path_custom_scanner_provisioning_script
-
-                #Set the chosen script globally for this machine
-                Write-Host "Currently editing "$global:scanner_names[$chosen-1]
-                $global:scanner_provisioning[$chosen-1] = $path_custom_scanner_provisioning_script
-                Write-Host "Script is set"
+                Write-Host "The chosen script is: "$path_custom_provisioning_script
             }
 
             Base-Menu
@@ -278,11 +261,11 @@ function Bootstrap ($current_scanner, $current_vulnerable, $counter)
     # Box add & vagrant up
 
     Set-Location $scope_dir
-    vagrant box add $current_vulnerable --provider virtualbox
-    vagrant box add $current_scanner --provider virtualbox
+    vagrant box add $current_vulnerable
+    vagrant box add $current_scanner
 
     # Virtualbox as dependency
-    vagrant up
+    vagrant up --provider virtualbox
     # Destroy the machines for purity and limitation of ssh errors and ip collisions
     vagrant destroy -f
 # Create Result folders
