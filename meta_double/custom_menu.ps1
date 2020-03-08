@@ -47,7 +47,7 @@ function Base-Menu
     {
         Write-Host "2: Choose another vulnerable. Currently chosen vulnerables are "$global:box_vulnerable
     }
-    Write-Host "3: Start the scans"
+    Write-Host "3: Start the scans (and configuration)"
     Write-Host "4: Get the scan-results"
     Write-Host "5: Add a custom scanner box"
 	
@@ -81,8 +81,8 @@ function Base-Menu
 			$name_custom_box = Read-Host -Prompt "Add the name of the new box"
 			$type_custom_box = Read-Host -Prompt "Set the mode: Either Scaner Box (type: scanner) or Vulnerable Box (type: vulnerable) or both (type: both) if you want to abort type '' "
 			# Finally add the new box
-        Write-Host $global:custom_box
-        Write-Host $name_custom_box
+            Write-Host $global:custom_box
+            Write-Host $name_custom_box
 			vagrant box add $global:custom_box --name $name_custom_box
 			
 			# Add box to scanners list or vulnerable list or both
@@ -100,20 +100,20 @@ function Base-Menu
 				$global:vulnerable_names += $my_custom_box
 			}
 			elseif ($type_custom_box -eq ""){
-			Base-Menu
+			    Base-Menu
 			}
 			else{
-			Write-Host "There was an error"
-			Base-Menu
+			    Write-Host "There was an error"
+			    Base-Menu
 			}
 			
 			Write-Host "Added the box: $global:custom_box with the name: $name_custom_box"
 			Base-Menu
-		}
+		    }
 
-    }
+        }
+    
 }
-
 # The Results menu
 function Results-Menu
 {
@@ -171,7 +171,6 @@ function Scanner-Menu
                 Write-Host "Fitting: "$fitting_scripts
                 for ($i=1; $i -le $fitting_scripts.Count; $i++) {
                     Write-Host $i" : "$($fitting_scripts[$i-1])
-                    Write-Host "I got here." 
                 }
                 [int]$chosen = Read-Host -Prompt "Choose a script"
                 $path_custom_scanner_provisioning_script = $($fitting_scripts[$chosen-1])
@@ -283,7 +282,7 @@ function Bootstrap ($current_scanner, $current_vulnerable, $counter)
 
     # Virtualbox as dependency
     vagrant up
-    # Destroy the machines for purity and limitation of ssh errors and ip collisions
+    # Destroy the machines for purity and limitation of ssh errors and ip collisions also for triggering the :before destroy scripts
     vagrant destroy -f
 # Create Result folders
 
@@ -297,7 +296,7 @@ function Bootstrap ($current_scanner, $current_vulnerable, $counter)
 function Scan-Start
 {
     [int] $counter = 1
-    Write-Host "Scan started"
+
     Write-Host "Scanners: $global:box_scanner"
     Write-Host "Vulnerables: $global:box_vulnerable"
     # Do the vagrant process
@@ -312,7 +311,21 @@ function Scan-Start
         Base-Menu
     }
     elseif ($global:box_scanner.Count -gt 0 -and $global:box_vulnerable.Count -gt 0){
+
+        # Global configurations
+
+        Write-Host "Do you want to monitor the differences on the vulnerable machine while scanning?"
+        [String] $monitoring = Read-Host -Prompt "y or n"
+        if ($monitoring -eq "y"){
+            # TODO: Load the monitoring provisioning script.
+            # When monitoring 1 == true set the env variable for the tripwire_init.sh script
+            $env:monitoring = 1
+            Write-Host "Monitoring: [yes]"
+
+
+        }
         # Loop over all the combinations and start the processes one after another! TODO: This is blocking: Maybe parallelize but vagrant will block it from happening
+        Write-Host "Scan(s) started"
         foreach ($objectA in $global:box_scanner){
             #Write-Host "Scanner: $objectA"
             foreach ($objectB in $global:box_vulnerable){

@@ -1,4 +1,0 @@
-# Nmap 6.40 scan initiated Wed Mar  4 12:55:12 2020 as: nmap -sC -sV -oA nmap/nmap_scan_results 172.16.16.3
-Host: 172.16.16.3 ()	Status: Up
-Host: 172.16.16.3 ()	Ports: 21/open/tcp//ftp//ProFTPD 1.3.5/, 22/open/tcp//ssh//(protocol 2.0)/, 80/open/tcp//http//Apache httpd 2.4.7 ((Ubuntu))/, 445/open/tcp//netbios-ssn//Samba smbd 3.X (workgroup: UBUNTU)/, 631/open/tcp//ipp//CUPS 1.7/, 3000/closed/tcp//ppp///, 3306/open/tcp//mysql//MySQL (unauthorized)/, 8181/open/tcp//http//WEBrick httpd 1.3.1 (Ruby 2.3.7 (2018-03-28))/	Ignored State: filtered (992)
-# Nmap done at Wed Mar  4 12:56:19 2020 -- 1 IP address (1 host up) scanned in 67.78 seconds
