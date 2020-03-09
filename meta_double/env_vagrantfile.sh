@@ -19,10 +19,10 @@ Vagrant.configure("2") do |config|
 	if $env:monitoring
 		vulnerable.vm.provision "file", source: "../twpol.txt", destination: "/home/vagrant/"
 		vulnerable.vm.provision "shell", path: "../tripwire_init.sh"
-		# Before destroying the machine get the reports
+		# Before destroying the machine get the reports - INFO: The remote script has to end with an echo or sth or it will fail.
 		vulnerable.trigger.before :destroy do |trigger|
 			trigger.warn = "Checking tripwire against the baseline for differences"
-			trigger.run_remote = {inline: "tripwire --check > /vagrant/tripwire_log.txt"}
+			trigger.run_remote = {inline: "tripwire --check > /vagrant/tripwire_log.txt; echo 'Tripwire log copied'"}
 			trigger.warn = "Test"
 		end
 	end
