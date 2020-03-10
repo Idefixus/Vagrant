@@ -304,7 +304,8 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     # Virtualbox as dependency
     vagrant up
     # Destroy the machines for purity and limitation of ssh errors and ip collisions also for triggering the :before destroy scripts
-    vagrant destroy -f
+    #vagrant destroy -f
+    vagrant destroy
 # Create Result folders
 
 # Start scan with right parameters and provisioning scripts

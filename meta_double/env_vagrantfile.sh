@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config|
 	vulnerable.vm.network "private_network", ip: "$env:IP_VULNERABLE"
 	vulnerable.vm.synced_folder "sync/", "$env:PATH_VULNERABLE_SYNC", create: true
 	# Main provisioning with shell, maybe also abstract so ansible and docker and so are possible.
-	vulnerable.vm.provision "shell", path: "$env:VULNERABLE_PROVISIONING"
+	vulnerable.vm.provision "shell", path: "$env:VULNERABLE_PROVISIONING_FILE_NAME"
 	
 	if $env:monitoring
 		vulnerable.vm.provision "file", source: "../twpol.txt", destination: "/home/vagrant/"
@@ -31,6 +31,9 @@ Vagrant.configure("2") do |config|
 	scanner.vm.box = "$env:SCANNER_BOXNAME"
 	scanner.vm.network "private_network", ip: "$env:IP_SCANNER"
 	scanner.vm.synced_folder "sync/", "$env:PATH_SCANNER_SYNC", create: true
-	scanner.vm.provision "shell", path: "$env:SCANNER_PROVISIONING"
+	#Openvas automation TODO: Maybe sync whole folder. Handle different provisioning scripts
+	scanner.vm.provision "file", source: "../get_openvas_result.sh", destination: "/home/vagrant/"
+	scanner.vm.provision "file", source: "../openvas_scan_automation_start.sh", destination: "/home/vagrant/"
+	scanner.vm.provision "shell", path: "$env:SCANNER_PROVISIONING_FILE_NAME"
   end
 end

@@ -1,7 +1,7 @@
 echo "Doing a openvas basic scan"
 #$env:IP_VULNERABLE=192.168.178.24
-./openvas_scan_automation_start.sh $env:IP_VULNERABLE
-#./edited_automation.sh 192.168.178.24
+#./openvas_scan_automation_start.sh $env:IP_VULNERABLE
+./openvas_scan_automation_start.sh 192.168.178.24
 # --- CONFIGURATION ---
 
 # omp config
