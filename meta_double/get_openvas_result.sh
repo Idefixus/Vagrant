@@ -62,7 +62,7 @@ if [ $aborted -eq 0 ]; then
     FILENAME="openvas_${FILENAME//[^a-zA-Z0-9_\.\-]/}_$(date +%s)"
 
 	omp -u $user -w $password --get-report $report_id --format $format_id > "$FILENAME.html"
-    out=$(omp -u $user -w $password --get-report $report_id --format $format_id > $FILENAME.$FORMAT)
+    out=$(omp -u $user -w $password --get-report $report_id --format $format_id > /vagrant/$FILENAME.$FORMAT)
 
     if [ $? -ne 0 ]; then 
         echo '[!] Failed getting report.'; 

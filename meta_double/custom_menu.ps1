@@ -272,8 +272,8 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     $env:SCANNER_PROVISIONING_FILE_NAME = "scanner_provisioning.sh"
     #$env:VULNERABLE_PROVISIONING = "vulnerable_provisioning.sh" # TODO: Custom vulnerable script
     $env:VULNERABLE_PROVISIONING_FILE_NAME = "vulnerable_provisioning.sh"
-    $env:PATH_VULNERABLE_SYNC = "/home/vagrant"
-    $env:PATH_SCANNER_SYNC = "/home/vagrant"
+    $env:PATH_VULNERABLE_SYNC = "/vagrant"
+    $env:PATH_SCANNER_SYNC = "/vagrant"
     $env:IP_SCANNER = "172.16.16.2"
     $env:IP_VULNERABLE = "172.16.16.3"
 
@@ -303,9 +303,15 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
 
     # Virtualbox as dependency
     vagrant up
+
+    # Do the scan by hand because of bug: Works now
+    #vagrant ssh scanner -c "echo 'Doing scan by hand'"
+    #vagrant ssh scanner -c "sudo bash openvas_scan_automation_start.sh $env:IP_VULNERABLE"
+    #vagrant ssh scanner -c "ip address > /vagrant/ip_scanner.txt"
+
     # Destroy the machines for purity and limitation of ssh errors and ip collisions also for triggering the :before destroy scripts
-    #vagrant destroy -f
-    vagrant destroy
+    vagrant destroy -f
+
 # Create Result folders
 
 # Start scan with right parameters and provisioning scripts

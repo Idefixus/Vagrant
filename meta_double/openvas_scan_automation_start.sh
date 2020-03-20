@@ -5,16 +5,15 @@
 #	v0.3
 # 2020
 
-trap ctrl_c INT
-
 # Install pcregrep for pattern matching in grep if it doesn't exist on the machine already.
 
 pcregrep 2> /dev/null
 if [ $? -ne 2 ]; then
     echo "[!] pcregrep is not installed and will now be downloaded."
-	echo
-    apt install pcregrep -y
+    apt-get install pcregrep -y
 fi
+
+trap ctrl_c INT
 
 # --- CONFIGURATION ---
 
@@ -231,4 +230,4 @@ echo "Start script finished --> Loading the result script"
 
 # Start the other script with the right paramters
 echo "Format: $FORMAT"
-./get_openvas_result.sh $task_id $report_id $target_id $format_id $FORMAT $TARGET
+sudo bash get_openvas_result.sh $task_id $report_id $target_id $format_id $FORMAT $TARGET
