@@ -235,7 +235,25 @@ function Vulnerable-Menu
             "You chose the $($global:vulnerable_names[$vulnerable-1]) vulnerable"
             $global:box_vulnerable += $($global:vulnerable_names[$vulnerable-1])
             
-            Base-Menu
+            ## Add a provisioning script:
+
+            Write-Host "Choose a provisioning script or choose your own"
+
+            $choosable_scripts = Get-ChildItem -Path ".\provisioning\vulnerable_scripts\*.sh" -Name
+            Write-Host "Fitting: "$choosable_scripts
+                for ($i=1; $i -le $choosable_scripts.Count; $i++) {
+                    Write-Host $i" : "$($choosable_scripts[$i-1])
+                }
+                [int]$chosen = Read-Host -Prompt "Choose a script"
+                $path_custom_vulnerable_provisioning_script = $($choosable_scripts[$chosen-1])
+                Write-Host "The chosen script is: "$path_custom_vulnerable_provisioning_script
+
+                #Set the chosen script globally for this machine
+                Write-Host "Currently editing "$global:vulnerable_names[$chosen-1]
+                $global:vulnerable_provisioning += $path_custom_vulnerable_provisioning_script
+                Write-Host "Script is set"
+
+                Base-Menu
         }
         elseif ([int]$vulnerable -eq $($global:vulnerable_names.Count+1)){
             
@@ -253,10 +271,10 @@ function Vulnerable-Menu
 # Bootstrap mechanism for doing a 1S : 1V combination with all current configurations given by the paramters
 # TODO: Combine the configugration into an object or external file for better overview
 # TODO: Add custom vulnerable script after the combination
-function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_vulnerable, $counter, $local_dir)
+function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_vulnerable, $vulnerable_script, $counter, $local_dir)
 {
 
-    Write-Host $current_vulnerable and $current_scanner were chosen
+    Write-Host $current_vulnerable and $current_scanner were chosen -ForegroundColor Red -BackgroundColor Yellow
     # Create folder and set new env variables
     Write-Host "Scan Counter: $counter"
     Write-Host "Working dir: "$local_dir
@@ -268,10 +286,10 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     Write-Host $new_vulnerable_name
     $new_directory = "$time-$new_scanner_name-$new_vulnerable_name"
     New-Item -ItemType Directory -name $new_directory -Path "$global:working_dir\$local_dir"
-    Write-Host "The new directory $new_directory was created"
+    Write-Host "The new directory $new_directory was created" -ForegroundColor Red -BackgroundColor Yellow
     
     $scope_dir = "$global:working_dir\$local_dir\$new_directory"
-    Write-Host "New working direcory: "$scope_dir
+    Write-Host "New working direcory: "$scope_dir -ForegroundColor Red -BackgroundColor Yellow
 
     $env:SCANNER_BOXNAME = $current_scanner
     $env:VULNERABLE_BOXNAME = $current_vulnerable
@@ -287,7 +305,7 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
 # Create Vagrantfiles
 
  
-    Write-Host "Start vagrant process"
+    Write-Host "Start vagrant process" -ForegroundColor Red -BackgroundColor Yellow
     $StartMs = (Get-Date).Minute
 
     # Build the Vagrantfile and set the output encoding to utf8
@@ -300,7 +318,8 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
 
     # Expand Provisioning files:
     # TODO: Custom vulnerable script --> Change like scanner
-	Get-Content $global:working_dir\env_vulnerable_provisioning.sh | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$scope_dir\$env:VULNERABLE_PROVISIONING_FILE_NAME"
+	Get-Content "$global:working_dir\provisioning\vulnerable_scripts\$vulnerable_script" | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$scope_dir\$env:VULNERABLE_PROVISIONING_FILE_NAME"
+
 
     # Box add & vagrant up
 
@@ -317,14 +336,15 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     #vagrant ssh scanner -c "ip address > /vagrant/ip_scanner.txt"
 
     # Destroy the machines for purity and limitation of ssh errors and ip collisions also for triggering the :before destroy scripts
-    #vagrant destroy -f
+    Write-Host "All machines are being destroyed (some scripts can be triggered during this process so this could take a while before the machines are actually destroyed)" -ForegroundColor Red -BackgroundColor Yellow
+    vagrant destroy -f
 
 # Create Result folders
 
 # Start scan with right parameters and provisioning scripts
 
     $EndMs = (Get-Date).Minute
-    Write-Host "This script took $($EndMs - $StartMs) minutes to run and now destroys the machines"
+    Write-Host "This script took $($EndMs - $StartMs) minutes to run and now destroys the machines" -ForegroundColor Red -BackgroundColor Yellow
 
 }
 
@@ -332,24 +352,24 @@ function Scan-Start
 {
     [int] $counter = 1
 
-    Write-Host "Scanners: $global:box_scanner"
-    Write-Host "Vulnerables: $global:box_vulnerable"
+    Write-Host "Scanners: $global:box_scanner" -ForegroundColor Red -BackgroundColor Yellow
+    Write-Host "Vulnerables: $global:box_vulnerable" -ForegroundColor Red -BackgroundColor Yellow
     # Do the vagrant process
 
     #Schedule the machines
     if ($global:box_scanner.Count -eq 0){
-        Write-Host "You didn't choose a scanner! Choose at least one scanner and one vulnerable to continue"
+        Write-Host "You didn't choose a scanner! Choose at least one scanner and one vulnerable to continue" -ForegroundColor Red
         Base-Menu
     }
     if ($global:box_vulnerable.Count -eq 0){
-        Write-Host "You didn't choose a scanner! Choose at least one scanner and one vulnerable to continue"
+        Write-Host "You didn't choose a scanner! Choose at least one scanner and one vulnerable to continue" -ForegroundColor Red
         Base-Menu
     }
     elseif ($global:box_scanner.Count -gt 0 -and $global:box_vulnerable.Count -gt 0){
 
         # Global configurations
 
-        Write-Host "Do you want to monitor the differences on the vulnerable machine while scanning?"
+        Write-Host "Do you want to monitor the differences on the vulnerable machine while scanning?" -ForegroundColor Red -BackgroundColor Yellow
         [String] $monitoring = Read-Host -Prompt "y or n"
         if ($monitoring -eq "y"){
             # TODO: Load the monitoring provisioning script.
@@ -366,27 +386,30 @@ function Scan-Start
         $local_dir = "Scans_$time"
 
         # Loop over all the combinations and start the processes one after another!
-        Write-Host "Scan(s) started"
+        Write-Host "Scan(s) started" -ForegroundColor Red -BackgroundColor Yellow
         #Iterator for the offset of the chosen machines for configurations
+
         $scanner_iterator = 0
+        $vulnerable_iterator = 0
         foreach ($objectA in $global:box_scanner){
             $scanner_script = $global:scanner_provisioning[$scanner_iterator]
             $scanner_type = $global:box_scanner_types[$scanner_iterator]
-            Write-Host "Current scanner $objectA, the type of the machine is a $scanner_type and the script $scanner_script"
+            Write-Host "Current scanner $objectA, the type of the machine is a $scanner_type and the script $scanner_script" -ForegroundColor Red -BackgroundColor Yellow
             $scanner_iterator++
             foreach ($objectB in $global:box_vulnerable){
-                Write-Host "$objectA and $objectB are excecuted"
-                Bootstrap -current_scanner $objectA -scanner_script $scanner_script -scanner_type $scanner_type -current_vulnerable $objectB -counter $counter -local_dir $local_dir
+                $vulnerable_script = $global:vulnerable_provisioning[$vulnerable_iterator]
+                $vulnerable_iterator++
+                Write-Host "$objectA and $objectB are excecuted" -ForegroundColor Red -BackgroundColor Yellow
+                Bootstrap -current_scanner $objectA -scanner_script $scanner_script -scanner_type $scanner_type -current_vulnerable $objectB -vulnerable_script $vulnerable_script -counter $counter -local_dir $local_dir
                 $counter = $counter + 1
             }
         }
     }
     else {
-        Write-Host "An error occured, some configurations were false: Please restart"
+        Write-Host "An error occured, some configurations were false: Please restart" -ForegroundColor Red
         Base-Menu
     }
 
-    Write-Host "Machines have to be destroyed"
 }
 
 # Start up the Base-Menu
