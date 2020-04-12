@@ -17,8 +17,8 @@ Vagrant.configure("2") do |config|
 	vulnerable.vm.provision "shell", path: "$env:VULNERABLE_PROVISIONING_FILE_NAME"
 	
 	if $env:monitoring
-		vulnerable.vm.provision "file", source: "../twpol.txt", destination: "/home/vagrant/"
-		vulnerable.vm.provision "shell", path: "../tripwire_init.sh"
+		vulnerable.vm.provision "file", source: "../../twpol.txt", destination: "/home/vagrant/"
+		vulnerable.vm.provision "shell", path: "../../tripwire_init.sh"
 		# Before destroying the machine get the reports - INFO: The remote script has to end with an echo or sth or it will fail.
 		vulnerable.trigger.before :destroy do |trigger|
 			trigger.warn = "Checking tripwire against the baseline for differences"
@@ -32,8 +32,8 @@ Vagrant.configure("2") do |config|
 	scanner.vm.network "private_network", ip: "$env:IP_SCANNER"
 	scanner.vm.synced_folder "sync/", "$env:PATH_SCANNER_SYNC", create: true
 	#Openvas automation TODO: Maybe sync whole folder. Handle different provisioning scripts
-	scanner.vm.provision "file", source: "../get_openvas_result.sh", destination: "/home/vagrant/"
-	scanner.vm.provision "file", source: "../openvas_scan_automation_start.sh", destination: "/home/vagrant/"
+	scanner.vm.provision "file", source: "../../get_openvas_result.sh", destination: "/home/vagrant/"
+	scanner.vm.provision "file", source: "../../openvas_scan_automation_start.sh", destination: "/home/vagrant/"
 	scanner.vm.provision "shell", path: "$env:SCANNER_PROVISIONING_FILE_NAME"
   end
 end

@@ -253,18 +253,25 @@ function Vulnerable-Menu
 # Bootstrap mechanism for doing a 1S : 1V combination with all current configurations given by the paramters
 # TODO: Combine the configugration into an object or external file for better overview
 # TODO: Add custom vulnerable script after the combination
-function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_vulnerable, $counter)
+function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_vulnerable, $counter, $local_dir)
 {
 
     Write-Host $current_vulnerable and $current_scanner were chosen
     # Create folder and set new env variables
     Write-Host "Scan Counter: $counter"
-    Write-Host "Working dir: "$global:working_dir
-    $new_directory = "Scan_$counter"
-    $scope_dir = "$global:working_dir\$new_directory"
-    Write-Host $scope_dir
-    New-Item -ItemType Directory -name $new_directory -Path $global:working_dir
+    Write-Host "Working dir: "$local_dir
+    $time = Get-Date -DisplayHint Date -Format FileDateTime
+    Write-Host $current_scanner
+    $new_scanner_name = $current_scanner.Replace("/","")
+    Write-Host $new_scanner_name
+    $new_vulnerable_name = $current_vulnerable.Replace("/","")
+    Write-Host $new_vulnerable_name
+    $new_directory = "$time-$new_scanner_name-$new_vulnerable_name"
+    New-Item -ItemType Directory -name $new_directory -Path "$global:working_dir\$local_dir"
     Write-Host "The new directory $new_directory was created"
+    
+    $scope_dir = "$global:working_dir\$local_dir\$new_directory"
+    Write-Host "New working direcory: "$scope_dir
 
     $env:SCANNER_BOXNAME = $current_scanner
     $env:VULNERABLE_BOXNAME = $current_vulnerable
@@ -310,7 +317,7 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     #vagrant ssh scanner -c "ip address > /vagrant/ip_scanner.txt"
 
     # Destroy the machines for purity and limitation of ssh errors and ip collisions also for triggering the :before destroy scripts
-    vagrant destroy -f
+    #vagrant destroy -f
 
 # Create Result folders
 
@@ -352,6 +359,12 @@ function Scan-Start
 
 
         }
+
+        # Create a subfolder for the scans for persistence
+        $time = Get-Date -DisplayHint Date -Format FileDateTime
+        New-Item -ItemType Directory -name "Scans_$time" -Path "$global:working_dir"
+        $local_dir = "Scans_$time"
+
         # Loop over all the combinations and start the processes one after another!
         Write-Host "Scan(s) started"
         #Iterator for the offset of the chosen machines for configurations
@@ -363,8 +376,7 @@ function Scan-Start
             $scanner_iterator++
             foreach ($objectB in $global:box_vulnerable){
                 Write-Host "$objectA and $objectB are excecuted"
-                Bootstrap -current_scanner $objectA -scanner_script $scanner_script -scanner_type $scanner_type -current_vulnerable $objectB -counter $counter
-                #Bootstrap -current_scanner $objectA -current_vulnerable $objectB -counter $counter
+                Bootstrap -current_scanner $objectA -scanner_script $scanner_script -scanner_type $scanner_type -current_vulnerable $objectB -counter $counter -local_dir $local_dir
                 $counter = $counter + 1
             }
         }
