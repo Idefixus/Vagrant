@@ -1,0 +1,32 @@
+[
+    {
+        "name":  "ubuntu/trusty64",
+        "type":  "scanner",
+        "os":  "Ubuntu"
+    },
+    {
+        "name":  "hashicorp/precise64",
+        "type":  "scanner",
+        "os":  "Ubuntu"
+    },
+    {
+        "name":  "kalilinux/rolling",
+        "type":  "scanner",
+        "os":  "Debian"
+    },
+    {
+        "name":  "ubuntu/trusty64",
+        "type":  "vulnerable",
+        "os":  "Ubuntu"
+    },
+    {
+        "name":  "rapid7/metasploitable3-ub1404",
+        "type":  "vulnerable",
+        "os":  "Ubuntu"
+    },
+    {
+        "name":  "hashicorp/precise64",
+        "type":  "vulnerable",
+        "os":  "Ubuntu"
+    }
+]
