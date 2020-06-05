@@ -39,13 +39,44 @@ $user = Read-Host
 
 #Add a VM to the system
 function Add-VM-Menu{
+$name = ""
+$type = ""
+$os = ""
 Write-Host "You entered the Add VM menu"
+$cloud = Read-Host -Prompt "Is this a machine in the cloud? Type y or n to choose."
+
+if ($cloud -ne "y"){
 $name = Read-Host -Prompt "Bitte geben Sie den Namen der neuen VM an!"
+}
 $type = Read-Host -Prompt "Bitte geben Sie den VM-Typen der neuen VM an (z.B. scanner oder vulnerable)!"
 $os = Read-Host -Prompt "Bitte geben Sie den OS-Typen an der neuen VM an (z.B. Ubuntu)!"
+Write-Host "A local machine link for testing: C:\Users\robin\Desktop\packer_projects\packer-templates\bento\builds\openvas-packer-debian.virtualbox.box"
+Write-Host "Link to remote trusty machine machine: https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
+$link = Read-Host -Prompt "Provide a full link to the VM image in .box format on the host machine. You can also use a short link for the vagrant cloud e.g. ubuntu/trusty64"
+
+if ($cloud -eq "n"){
+vagrant box add $link --name $name
+}
+elseif ($cloud -eq "y") {
+$linktype = Read-Host -Prompt "Is the link a dirct link or a shortname to the remote machine? (Type: dl for direct link or sn for shortname)"
+    if($linktype -eq "dl"){
+    # Name needed for remote link.
+    $name = Read-Host -Prompt "Please provide a name for your machine"
+    vagrant box add $link --name $name
+    }
+    elseif($linktype -eq "sn"){
+        $name = $link
+        vagrant box add $link
+    }
+}
+else {
+Write-Host "You chose an nonexisting value. Returnung to menu..." 
+Menu
+}
+
+# Get the current vms from the JSON file
 $json = Get-Content vms.json | Out-String | ConvertFrom-Json
-
 # Add VM to vms.json
 
 # Create Custom Object
@@ -98,12 +129,16 @@ $input = Read-Host -Prompt "Choose a VM to remove (choose number and enter)"
                         {
                             $newVms += $vm
                         }
+                        if ($index -eq $input){
+                        vagrant box remove $vm.name
+                        }
                     }
                     # Write to file
                     $newVms | ConvertTo-Json | Set-Content vms.json
                     
                 }
             }
+# Todo: vagrant box remove THEBOX
 
 Menu
 }

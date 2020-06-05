@@ -3,30 +3,42 @@
 param (
 [String]$mode 
 )
+# Set the manuell variable to no
+$env:manuell = 0
 
+#Set-StrictMode -Version 1
+$vms = Get-Content .\vms.json | Out-String | ConvertFrom-Json
 
-# Scanner configs: All have to be the same length
-[String[]] $global:scanner_names = "ubuntu/trusty64", "openvas-packer-debian.virtualbox.box", "blank"
-#[String[]] $global:scanner_config = @(("ubuntu/trusty64", "openvas-packer-debian.virtualbox.box", "blank"),("Ubuntu", "Debian", "unknown"))
-$global:scanner_types = "Ubuntu", "Debian", ""
+# Todo get the vm config:
+[String[]] $global:scanner_names = @()
+[String[]] $global:scanner_types = @()
+[String[]] $global:scanner_os = @()
+[String[]] $global:vulnerable_names = @()
+[String[]] $global:vulnerable_types = @()
+[String[]] $global:vulnerable_os = @()
 
-
-# Vulnerable configs
-[String[]] $global:vulnerable_names = "rapid7/metasploitable3-ub1404", "ubuntu/trusty64", "hashicorp/precise64"
-#[String[]] $global:vulnerable_config = @(("rapid7/metasploitable3-ub1404", "ubuntu/trusty64", "hashicorp/precise64"),("Ubuntu", "Ubuntu", "Ubuntu"))
-$global:vulnerable_types = "Ubuntu", "Ubuntu", "Ubuntu"
-
+foreach ($vm in $vms) {
+    if($vm.type -eq "scanner"){
+        $global:scanner_names += $vm.name
+        $global:scanner_types += $vm.type
+        $global:scanner_os += $vm.os
+    }
+    elseif($vm.type -eq "vulnerable"){
+        $global:vulnerable_names += $vm.name
+        $global:vulnerable_types += $vm.type
+        $global:vulnerable_os += $vm.os
+    }
+}
 
 [String[]] $global:box_scanner = @()
 [String[]] $global:scanner_provisioning = @()
 [String[]] $global:box_scanner_types = @()
 [String[]] $global:box_vulnerable = @()
+[String[]] $global:box_scanner_os = @()
 [String[]] $global:vulnerable_provisioning = @()
 [String[]] $global:box_vulnerable_types = @()
 # Fill the current working directory with the current path
-# [String] $global:working_dir = "C:\Users\robin\Desktop\vagrant_projects\meta_double\"
 [String] $global:working_dir = $PSScriptRoot
-[String] $global:custom_box = "C:\Users\robin\Desktop\packer_projects\packer-templates\bento\builds\openvas-packer-debian.virtualbox.box"
 
 # Show a base menu
 
@@ -52,9 +64,9 @@ function Base-Menu
         Write-Host "2: Choose another vulnerable. Currently chosen vulnerables are "$global:box_vulnerable
     }
     Write-Host "3: Start the scans (and configuration)"
-    Write-Host "4: Get the scan-results"
-    Write-Host "5: Add a custom scanner box"
-	
+    Write-Host "4: Get the scan-results."
+    Write-Host "5: Start a Scanner-Vulnerable-Pair in manual mode."
+	Write-Host "6: Redo a scan"
     $user = Read-Host
    # $user = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyUp')
     switch ($user){
@@ -73,62 +85,77 @@ function Base-Menu
             Results-Menu
         }
 		'5' {
-            # Add a custom box
-			$my_custom_box = Read-Host -Prompt "Add the link to the custom box or enter "" for the hardcoded version"
-			if ($my_custom_box -eq ""){
-				Write-Host "The hardcoded version has been chosen. The path is: $global:custom_box"
-			}
-			else {
-				Write-Host "The new box can be found at $my_custom_box"
-				$global:custom_box = $my_custom_box
-			}
-			$name_custom_box = Read-Host -Prompt "Add the name of the new box"
-			$type_custom_box = Read-Host -Prompt "Set the mode: Either Scaner Box (type: scanner) or Vulnerable Box (type: vulnerable) or both (type: both) if you want to abort type '' "
-            $boxtype_custom_box = Read-Host -Prompt "What kind of machine is this: Ubuntu, Debian"
-			# Finally add the new box
-            Write-Host $global:custom_box
-            Write-Host $name_custom_box
-			vagrant box add $global:custom_box --name $name_custom_box
-			
-			# Add box to scanners list or vulnerable list or both
-			if ($type_custom_box -eq "scanner"){
-                Write-Host $global:scanner_names
-                Write-Host $name_custom_box				
-                $global:scanner_names += $name_custom_box
-                Write-Host $global:scanner_names
-                # Add scanner config for machine type and provisioning script
-                $global:scanner_types += $boxtype_custom_box
 
-			}
-			elseif ($type_custom_box -eq "vulnerable"){
-				$global:vulnerable_names += $my_custom_box
+            
+            if (($global:box_scanner.Count -eq 1) -and ($global:box_vulnerable.Count -eq 1)){
 
-                # Add vulnerable config for machine type and provisioning script
-                $global:vulnerable_types += $boxtype_custom_box
-			}
-			elseif ($type_custom_box -eq "both") {
-				$global:scanner_names += $my_custom_box
-				$global:vulnerable_names += $my_custom_box
-                # Add vulnerable config for machine type and provisioning script
-                $global:vulnerable_types += $boxtype_custom_box
-                $global:scanner_types += $boxtype_custom_box
-
-			}
-			elseif ($type_custom_box -eq ""){
-			    Base-Menu
-			}
-			else{
-			    Write-Host "There was an error"
-			    Base-Menu
-			}
-			
-			Write-Host "Added the box: $global:custom_box with the name: $name_custom_box"
-			Base-Menu
-		    }
+                    # Start manual mode with the selected VMs but you have to issue the scans and provisioning yourself. The scripts can be found in the respective folders. You can send them through SSH or through putting them in the synchronized folders.
+                    $env:manuell = 1
+                    Scan-Start
+                    Finished       	    
+                    }
+                
+            else {
+            Write-Host "Not enough or too many scanners or vulnerables chosen. In this mode you have to select One Scanner and One Vulnerable"
+            Base-Menu
+            }
 
         }
+        '6'{
+        $recent_scans = Get-Childitem -Path Scans_* -Name
+                foreach($sc in $recent_scans){
+                    $index = [array]::IndexOf($recent_scans,$sc)
+                    #TODO: Do nicer... I hate arrays
+                    $index += 1
+                    Write-Host $index":"$sc
+                }
+
+
+                $input = Read-Host -Prompt "Choose a Scan to repeat."
+                
+                foreach($sc in $recent_scans){
+                    $index = [array]::IndexOf($recent_scans,$sc)
+                    $comp = $input - 1
+                    if($comp -eq $index){
+                           # TODO: Inline doesnt work. Fix it
+                           Write-Host "Scan restarted: $sc"
+                           cd $sc
+                           $subscans = Get-Childitem -Name
+                           foreach($sub in $subscans){
+                                # TODO: Foreach element in subfolder do vagrant up.
+                                cd $sub
+                                vagrant up
+                                # TODO Vagrant destroy
+                                #Write-Host "All machines are being destroyed"
+                                #vagrant destroy -f
+                            }
+                    }
+                }
+
+        }
+       }
     
 }
+
+# Recursive menu for destroying all machines when you press yes
+
+function Finished
+{
+    $finished = Read-Host -Prompt "To continue and destroy the machines please enter a yes here."
+    if ($finished -eq "yes")
+    {
+        Write-Host "All machines are being destroyed" -ForegroundColor Red -BackgroundColor Yellow
+        vagrant destroy -f
+        Exit 0
+    }
+    else 
+    {
+        Finished
+    }
+}
+
+
+
 # The Results menu
 function Results-Menu
 {
@@ -173,11 +200,11 @@ function Scanner-Menu
             Write-Host "You chose the $($global:scanner_names[$scanner-1]) scanner. This is a $($global:scanner_types[$scanner-1])"
 
             #Choose fitting Scans depending on the machine type.
-            $machine_type = $($global:scanner_types[$scanner-1])
+            $machine_type = $($global:scanner_os[$scanner-1])
 
             #Set the global variables for the current scan
             $global:box_scanner += $($global:scanner_names[$scanner-1])
-            $global:box_scanner_types += $machine_type
+            $global:box_scanner_os += $machine_type
 
 
             Write-Host "Choose a use-case (scan configuration)"
@@ -287,9 +314,13 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     $new_directory = "$time-$new_scanner_name-$new_vulnerable_name"
     New-Item -ItemType Directory -name $new_directory -Path "$global:working_dir\$local_dir"
     Write-Host "The new directory $new_directory was created" -ForegroundColor Red -BackgroundColor Yellow
-    
-    $scope_dir = "$global:working_dir\$local_dir\$new_directory"
-    Write-Host "New working direcory: "$scope_dir -ForegroundColor Red -BackgroundColor Yellow
+    # TODO: UTF8 Error
+    #$enc = [System.Text.Encoding]::UTF8
+    #$var = "$global:working_dir\$local_dir\$new_directory"
+    #$env:SCOPE_DIR = $enc.GetBytes($var)
+    $env:SCOPE_DIR = "$global:working_dir\$local_dir\$new_directory"
+
+    Write-Host "New working direcory: "$env:SCOPE_DIR -ForegroundColor Red -BackgroundColor Yellow
 
     $env:SCANNER_BOXNAME = $current_scanner
     $env:VULNERABLE_BOXNAME = $current_vulnerable
@@ -311,19 +342,19 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     # Build the Vagrantfile and set the output encoding to utf8
 	$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
     # Get the scripts to expand to the folder
-	Get-Content $global:working_dir\env_vagrantfile.sh | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$scope_dir\Vagrantfile"
+	Get-Content $global:working_dir\env_vagrantfile.sh | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$env:SCOPE_DIR\Vagrantfile"
 
 	# Expand Provisioning files:
-	Get-Content "$global:working_dir\provisioning\$scanner_type\$scanner_script" | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$scope_dir\$env:SCANNER_PROVISIONING_FILE_NAME"
+	Get-Content "$global:working_dir\provisioning\$scanner_type\$scanner_script" | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$env:SCOPE_DIR\$env:SCANNER_PROVISIONING_FILE_NAME"
 
     # Expand Provisioning files:
     # TODO: Custom vulnerable script --> Change like scanner
-	Get-Content "$global:working_dir\provisioning\vulnerable_scripts\$vulnerable_script" | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$scope_dir\$env:VULNERABLE_PROVISIONING_FILE_NAME"
+	Get-Content "$global:working_dir\provisioning\vulnerable_scripts\$vulnerable_script" | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) } > "$env:SCOPE_DIR\$env:VULNERABLE_PROVISIONING_FILE_NAME"
 
-
+    #TODO: Add custom scanner script here.
     # Box add & vagrant up
 
-    Set-Location $scope_dir
+    Set-Location $env:SCOPE_DIR
     vagrant box add $current_vulnerable --provider virtualbox
     vagrant box add $current_scanner --provider virtualbox
 
@@ -336,22 +367,25 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     #vagrant ssh scanner -c "ip address > /vagrant/ip_scanner.txt"
 
     # Destroy the machines for purity and limitation of ssh errors and ip collisions also for triggering the :before destroy scripts
+    if($env:manuell -eq 0){
     Write-Host "All machines are being destroyed (some scripts can be triggered during this process so this could take a while before the machines are actually destroyed)" -ForegroundColor Red -BackgroundColor Yellow
     vagrant destroy -f
-
+    }
+    Write-Host "You are in manuell mode. The machines will be destroyed when you continue"
 # Create Result folders
 
 # Start scan with right parameters and provisioning scripts
 
     $EndMs = (Get-Date).Minute
-    Write-Host "This script took $($EndMs - $StartMs) minutes to run and now destroys the machines" -ForegroundColor Red -BackgroundColor Yellow
+    Write-Host "This script took $($EndMs - $StartMs) minutes to run." -ForegroundColor Red -BackgroundColor Yellow
 
 }
 
 function Scan-Start
 {
     [int] $counter = 1
-
+    [String] $scanner_type = ""
+    $env:monitoring = 0
     Write-Host "Scanners: $global:box_scanner" -ForegroundColor Red -BackgroundColor Yellow
     Write-Host "Vulnerables: $global:box_vulnerable" -ForegroundColor Red -BackgroundColor Yellow
     # Do the vagrant process
@@ -366,19 +400,31 @@ function Scan-Start
         Base-Menu
     }
     elseif ($global:box_scanner.Count -gt 0 -and $global:box_vulnerable.Count -gt 0){
+       
+        # ------------- Enable-Plugins / Global configurations ------------- #
 
-        # Global configurations
-
-        Write-Host "Do you want to monitor the differences on the vulnerable machine while scanning?" -ForegroundColor Red -BackgroundColor Yellow
+            # Tripwire-Plug-In
+        Write-Host "Do you want to monitor the differences on the vulnerable machine while scanning? The result will be saved in the sync folder of the scan" -ForegroundColor Red -BackgroundColor Yellow
         [String] $monitoring = Read-Host -Prompt "y or n"
         if ($monitoring -eq "y"){
             # TODO: Load the monitoring provisioning script.
             # When monitoring 1 == true set the env variable for the tripwire_init.sh script
             $env:monitoring = 1
             Write-Host "Monitoring: [yes]"
-
-
         }
+            # Wireshark Plug-In
+        Write-Host "Do you want to monitor the traffic between the VMs the result will be saved in the sync folder of the scan?" -ForegroundColor Red -BackgroundColor Yellow
+        [String] $wireshark = Read-Host -Prompt "y or n"
+        if ($wireshark -eq "y"){
+            # Load the wireshark plug-in.
+            
+            $env:wireshark = 1
+            Write-Host "Wireshark: [yes]"
+        }   
+         
+        # TODO: maybe vb plugin. But this should be default tbh
+        # TODO: Track theses settings in a json for generating the final overview file.
+
 
         # Create a subfolder for the scans for persistence
         $time = Get-Date -DisplayHint Date -Format FileDateTime
@@ -391,9 +437,16 @@ function Scan-Start
 
         $scanner_iterator = 0
         $vulnerable_iterator = 0
+
         foreach ($objectA in $global:box_scanner){
             $scanner_script = $global:scanner_provisioning[$scanner_iterator]
-            $scanner_type = $global:box_scanner_types[$scanner_iterator]
+            if ($global:box_scanner_os -isnot [array]){
+            $scanner_type = $global:box_scanner_os
+            }
+            else{
+
+            $scanner_type = $global:box_scanner_os[$scanner_iterator]
+            }
             Write-Host "Current scanner $objectA, the type of the machine is a $scanner_type and the script $scanner_script" -ForegroundColor Red -BackgroundColor Yellow
             $scanner_iterator++
             foreach ($objectB in $global:box_vulnerable){
@@ -403,13 +456,13 @@ function Scan-Start
                 Bootstrap -current_scanner $objectA -scanner_script $scanner_script -scanner_type $scanner_type -current_vulnerable $objectB -vulnerable_script $vulnerable_script -counter $counter -local_dir $local_dir
                 $counter = $counter + 1
             }
+            $vulnerable_iterator = 0
         }
     }
     else {
         Write-Host "An error occured, some configurations were false: Please restart" -ForegroundColor Red
         Base-Menu
     }
-
 }
 
 # Start up the Base-Menu
