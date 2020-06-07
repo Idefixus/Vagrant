@@ -17,21 +17,30 @@
     {
         "name":  "ubuntu/trusty64",
         "type":  "vulnerable",
-        "os":  "Ubuntu"
+        "os":  "Ubuntu",
+		"vulnerabilities":  ""
     },
     {
         "name":  "rapid7/metasploitable3-ub1404",
         "type":  "vulnerable",
-        "os":  "Ubuntu"
+        "os":  "Ubuntu",
+		"vulnerabilities":  "./known_vulnerabilities/metsploitable3.json"
     },
     {
         "name":  "hashicorp/precise64",
         "type":  "vulnerable",
-        "os":  "Ubuntu"
+        "os":  "Ubuntu",
+		"vulnerabilities":  ""
     },
     {
         "name":  "OpenVAS",
         "type":  "scanner",
         "os":  "Debian"
+    },
+    {
+        "name":  "VulnMachine",
+        "type":  "vulnerable",
+        "os":  "Ubuntu",
+        "vulnerabilities":  "./known_vulnerabilities/metsploitable3.json"
     }
 ]

@@ -54,7 +54,9 @@ Write-Host "A local machine link for testing: C:\Users\robin\Desktop\packer_proj
 Write-Host "Link to remote trusty machine machine: https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
 $link = Read-Host -Prompt "Provide a full link to the VM image in .box format on the host machine. You can also use a short link for the vagrant cloud e.g. ubuntu/trusty64"
-
+if ($type -eq "vulnerable"){
+$vulnerabilities = Read-Host -Prompt "Provide a link to a  json file with known vulnerabilities with forward slashes or leave it empty (e.g. ./known_vulnerabilities/metsploitable3.json). The structure can be found in the examples"
+}
 if ($cloud -eq "n"){
 vagrant box add $link --name $name
 }
@@ -84,6 +86,9 @@ $vm = New-Object PSCustomObject
 $vm | Add-Member -type NoteProperty -name name -Value $name
 $vm | Add-Member -type NoteProperty -name type -Value $type
 $vm | Add-Member -type NoteProperty -name os -Value $os
+if ($type -eq "vulnerable"){
+$vm | Add-Member -type NoteProperty -name vulnerabilities -Value $vulnerabilities
+}
 # Add object to json String
 $json += $vm
 # Write to file
