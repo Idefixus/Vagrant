@@ -28,5 +28,10 @@
         "name":  "hashicorp/precise64",
         "type":  "vulnerable",
         "os":  "Ubuntu"
+    },
+    {
+        "name":  "OpenVAS",
+        "type":  "scanner",
+        "os":  "Debian"
     }
 ]

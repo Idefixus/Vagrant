@@ -26,6 +26,16 @@ Vagrant.configure("2") do |config|
 			#trigger.run_remote = {inline: "bash -c 'tripwire --check > /vagrant/tripwire_log.txt'"}
 		end
 	end
+	if $env:performance  == 1
+		vulnerable.vm.provision "file", source: "../../nmonchart", destination: "/home/vagrant/"
+		vulnerable.vm.provision "shell", path: "../../nmon.sh"
+		# Before destroying the machine get the nmonchart html file
+		vulnerable.trigger.before :destroy do |trigger|
+			trigger.warn = "Creating a html chart of the nmon results"
+			# Creating the chart and copying the files to the results folder for persistence
+			trigger.run_remote = {inline: "ksh nmonchart performance_result.nmon; mv performance_result.nmon /vagrant/; mv performance_result.html /vagrant/; echo 'Nmon result created and copied'"}
+		end
+	end
   end
   config.vm.define "scanner" do |scanner|
 	if $env:wireshark == 1

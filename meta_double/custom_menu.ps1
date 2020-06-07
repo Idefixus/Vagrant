@@ -141,7 +141,7 @@ function Base-Menu
 
 function Finished
 {
-    $finished = Read-Host -Prompt "To continue and destroy the machines please enter a yes here."
+    $finished = Read-Host -Prompt "You are in manuel mode: To continue and destroy the machines please enter 'yes' here."
     if ($finished -eq "yes")
     {
         Write-Host "All machines are being destroyed" -ForegroundColor Red -BackgroundColor Yellow
@@ -371,7 +371,6 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     Write-Host "All machines are being destroyed (some scripts can be triggered during this process so this could take a while before the machines are actually destroyed)" -ForegroundColor Red -BackgroundColor Yellow
     vagrant destroy -f
     }
-    Write-Host "You are in manuell mode. The machines will be destroyed when you continue"
 # Create Result folders
 
 # Start scan with right parameters and provisioning scripts
@@ -385,7 +384,15 @@ function Scan-Start
 {
     [int] $counter = 1
     [String] $scanner_type = ""
+
+    # ------------Plugin Global env variable: ------------- #
+
     $env:monitoring = 0
+    $env:wireshark = 0
+    $env:performance = 0
+
+    # ----------- #
+    
     Write-Host "Scanners: $global:box_scanner" -ForegroundColor Red -BackgroundColor Yellow
     Write-Host "Vulnerables: $global:box_vulnerable" -ForegroundColor Red -BackgroundColor Yellow
     # Do the vagrant process
@@ -421,6 +428,15 @@ function Scan-Start
             $env:wireshark = 1
             Write-Host "Wireshark: [yes]"
         }   
+        # Todo for scanner too
+        Write-Host "Do you want to monitor the performance of the vulnerable the result will be saved in the sync folder of the scan?" -ForegroundColor Red -BackgroundColor Yellow
+        [String] $performance = Read-Host -Prompt "y or n"
+        if ($performance -eq "y"){
+            # Load the wireshark plug-in.
+            
+            $env:performance = 1
+            Write-Host "Performance: [yes]"
+        }  
          
         # TODO: maybe vb plugin. But this should be default tbh
         # TODO: Track theses settings in a json for generating the final overview file.
