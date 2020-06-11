@@ -16,11 +16,11 @@
  - Route to the folder meta_double
  - Open a PowerShell console and start with configuring the testbed through executing the interactive kontext.ps1 script. Further information about the configuration options can be found in my masters thesis.
  
- ![alt text](https://github.com/Idefixus/Vagrant/blob/master/kontext.png?raw=true)
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/kontext.png?raw=true)
  
  - Once configuration is done, you can start the scan-configuration process. It is straight forward but further information can be found in my masters thesis.
- ![alt text](https://github.com/Idefixus/Vagrant/blob/master/testbed.png?raw=true)
- 
+
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/testbed.png?raw=true)
  
 # Linux Usage
 
