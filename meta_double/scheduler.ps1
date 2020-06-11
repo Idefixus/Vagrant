@@ -64,6 +64,11 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     #$enc = [System.Text.Encoding]::UTF8
     #$var = "$global:working_dir\$local_dir\$new_directory"
     #$env:SCOPE_DIR = $enc.GetBytes($var)
+    $pattern ='[\\]'
+    $string = "$global:working_dir\$local_dir\$new_directory"
+    $replace = $string -replace $pattern, '\\'
+    #$replace = $string -replace $pattern, '/'
+    $env:SCOPE_DIR_plugin = $replace
     $env:SCOPE_DIR = "$global:working_dir\$local_dir\$new_directory"
 
     Write-Host "New working direcory: "$env:SCOPE_DIR -ForegroundColor Red -BackgroundColor Yellow
@@ -116,6 +121,8 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     if($env:manuell -eq 0){
     Write-Host "All machines are being destroyed (some scripts can be triggered during this process so this could take a while before the machines are actually destroyed)" -ForegroundColor Red -BackgroundColor Yellow
     vagrant destroy -f
+    # Create the output file for this pairing
+    Create-Html
     }
 # Create Result folders
 
@@ -124,6 +131,113 @@ function Bootstrap ($current_scanner, $scanner_script, $scanner_type, $current_v
     $EndMs = (Get-Date).Minute
     Write-Host "This script took $($EndMs - $StartMs) minutes to run." -ForegroundColor Red -BackgroundColor Yellow
 
+}
+
+function Create-Html{
+    # Create a html result output file
+    New-Item .\result_overview.html -ItemType File
+    $localpath = Get-Location
+    $subfolder = Get-Childitem -Path sync -Name
+
+    $head = "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Result HTML</title>
+    <style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #ffffff;
+}
+.button {
+  font: bold 11px Arial;
+  text-decoration: none;
+  background-color: #EEEEEE;
+  color: #333333;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #CCCCCC;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #CCCCCC;
+}
+</style>
+</head>
+<body>
+<h2>All results of the current scan</h2>
+
+<table>
+  <tr>
+    <th>File</th>
+    <th>Description</th>
+  </tr>"
+    Add-Content result_overview.html $head
+    $description = ""
+    foreach($element in $subfolder){
+        Get-ChildItem -Path .\sync\ | Where {$_.extension -like ".nmon"}
+        if ($element -like '*.nmon'){
+            $description = 'This is a result file of the nmon performance measurement tool. It is unformatted. For a graphical overview look for an html file with the same name.'
+        }
+        elseif($element -like '*.nmon'){
+
+        }
+        elseif($element -like '*.pcap'){
+            $description = "This is a result of the network traffic. You can view it with a tool like Wireshark."
+        }
+        elseif($element -like 'tripwire_log.txt'){
+            $description = "This is a tripwire result. It shows the differences of the filesystem according to the baseline set while configuring the scan-process. <a class='button' href='..\..\twpol.txt'> tripwire config </a>"
+        }
+        elseif($element -like '*openvas*.html'){
+            $description = "This is an OpenVAS scan result. Click to see the scan results and configuration details."
+        }
+        elseif($element -like '*nikto*.html'){
+            $description = "This is the Nikto scan result. Click to see the scan results and configuration details."
+        }
+        elseif($element -like '*.nmap'){
+            $description = "This is the nmap scan result. Click to see the scan results and configuration details."
+        }
+        elseif($element -like 'performance_result.html'){
+            $description = "This is a graphical overview file for the nmon Performance Analysis. Click to see more details"
+        }
+        elseif($element -like '*.html'){
+            $description = "This is the scan result. Click to see the scan results and configuration details."
+        }
+        Add-Content result_overview.html "<tr>
+            <td>
+                <a class='button' href='file:///$localpath/sync/$element'> $element</a>
+            </td>
+            <td>
+                $description
+            </td>
+        </tr>"
+    }
+    $body = Add-Content result_overview.html "<tr>
+        <td>
+            <a class='button' href='file:///$localpath/Vagrantfile'> Vagrantfile</a>
+        </td>
+        <td>
+            This is the local Vagrant configuration file. It can be used to repeat the scan
+        </td>
+    </tr>"
+    $feet = "</table>
+    <br>
+    <div> Note: To manually repeat the scan you can either use the user-interface or navigate to the Vagrantfile in the folder of the scan you want to repeat. Open PowerShell at this location and type 'vagrant up'. The scan will automatically be repeated. </div>
+    <br>
+    
+    </body>
+</html>"
+Add-Content result_overview.html $feet
 }
 
 function Start-Bootstrap{

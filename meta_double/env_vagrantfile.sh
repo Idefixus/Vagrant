@@ -43,8 +43,10 @@ Vagrant.configure("2") do |config|
 				# Do a wireshark capture of the traffic - Some machines have the subnet on the first some on the second network interface
 			v.customize ['modifyvm', :id, '--nictrace1', 'on']    
 			v.customize ['modifyvm', :id, '--nictrace2', 'on'] 	  
-			v.customize ['modifyvm', :id, '--nictracefile1', "C:/Users/robin/Desktop/vagrant_projects/meta_double/Scans_20200605T1539572992/20200605T1539573256-ubuntutrusty64-ubuntutrusty64/trace1.pcap"]   
-			v.customize ['modifyvm', :id, '--nictracefile2', "C:/Users/robin/Desktop/vagrant_projects/meta_double/Scans_20200605T1539572992/20200605T1539573256-ubuntutrusty64-ubuntutrusty64/trace2.pcap"]   
+#			v.customize ['modifyvm', :id, '--nictracefile1', "$env:SCOPE_DIR/trace1.pcap"]   
+#			v.customize ['modifyvm', :id, '--nictracefile2', "$env:SCOPE_DIR/trace2.pcap"]   
+			v.customize ['modifyvm', :id, '--nictracefile1', "$env:SCOPE_DIR_plugin\\sync\\trace1.pcap"]   
+			v.customize ['modifyvm', :id, '--nictracefile2', "$env:SCOPE_DIR_plugin\\sync\\trace2.pcap"]  
 		end
 	end
 
@@ -54,6 +56,7 @@ Vagrant.configure("2") do |config|
 	#Openvas automation TODO: Maybe sync whole folder. Handle different provisioning scripts
 	scanner.vm.provision "file", source: "../../get_openvas_result.sh", destination: "/home/vagrant/"
 	scanner.vm.provision "file", source: "../../openvas_scan_automation_start.sh", destination: "/home/vagrant/"
+	scanner.vm.provision "file", source: "../../openvas_scan_automation_start_deep.sh", destination: "/home/vagrant/"
 	# If there is a manuell mode set then dont trigger the custom scan script. But it is copied to the machine.
 	if $env:manuell == 0
 		scanner.vm.provision "shell", path: "$env:SCANNER_PROVISIONING_FILE_NAME"
