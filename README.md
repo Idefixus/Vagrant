@@ -1,1 +1,1 @@
-These are my master thesis vagrant test projects
+This is my vagrant release candidate branch
