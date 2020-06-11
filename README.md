@@ -14,9 +14,12 @@
  # Run
  
  - Route to the folder meta_double
- - Open a PowerShell console and start with configuring the testbed through executing the interactive kontext.ps1 script. Further information about the configuration options can be found in my masters thesis
- - Once configuration is done, you can start the scan-configuration process. It is straight forward but further information can be found in my masters thesis.
+ - Open a PowerShell console and start with configuring the testbed through executing the interactive kontext.ps1 script. Further information about the configuration options can be found in my masters thesis.
  
+ ![alt text](https://github.com/Idefixus/Vagrant/blob/master/kontext.png?raw=true)
+ 
+ - Once configuration is done, you can start the scan-configuration process. It is straight forward but further information can be found in my masters thesis.
+ ![alt text](https://github.com/Idefixus/Vagrant/blob/master/testbed.png?raw=true)
  
  
 # Linux Usage
@@ -33,5 +36,21 @@ In line 48 and 49 (can change through time) you have to replace \\ with / . This
 - A notification, that a machine has already been created exists when rerunning a scan with the same VM (see: https://github.com/Idefixus/Vagrant/issues/56)
 
 # Impressions
+## Choose a scanner and scanscript
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/choose_scanner_and_script.png?raw=true)
+## Choose the plugins and start the scan
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/start_scan_choose_plugins.png?raw=true)
+## Folder with config and results created in runtime
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/persistent_config_and_result_folder.png?raw=true)
+## Result overview html file created after scan finished located in the result folder
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/result_overview.png?raw=true)
+## Example nmon Plug-In Result
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/nmon_plugin_performance_result.png?raw=true)
+## Example Nikto Scan result
+![alt text](https://github.com/Idefixus/Vagrant/blob/master/nikto_scan_results.png?raw=true)
+
+
+
+
 
 
