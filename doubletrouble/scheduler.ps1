@@ -1,1 +1,0 @@
-.\vag.ps1 > log.txt 2>&1
