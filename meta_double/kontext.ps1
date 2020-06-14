@@ -9,7 +9,7 @@ Write-Host "Please choose one option by pressing the key and enter:"
 Write-Host "1: Add a VM to the system."
 Write-Host "2: See all VMs or remove a VM from the environment"
 Write-Host "3: View or add scripts. You can add different scripts"
-Write-Host "4: End Script"
+Write-Host "4: Exit"
 
 
 $user = Read-Host

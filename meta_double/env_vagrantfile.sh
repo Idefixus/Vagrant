@@ -23,7 +23,6 @@ Vagrant.configure("2") do |config|
 		vulnerable.trigger.before :destroy do |trigger|
 			trigger.warn = "Checking tripwire against the baseline for differences"
 			trigger.run_remote = {inline: "tripwire --check > /vagrant/tripwire_log.txt; echo 'Tripwire log copied'"}
-			#trigger.run_remote = {inline: "bash -c 'tripwire --check > /vagrant/tripwire_log.txt'"}
 		end
 	end
 	if $env:performance  == 1
@@ -40,11 +39,9 @@ Vagrant.configure("2") do |config|
   config.vm.define "scanner" do |scanner|
 	if $env:wireshark == 1
 		scanner.vm.provider 'virtualbox' do |v|  
-				# Do a wireshark capture of the traffic - Some machines have the subnet on the first some on the second network interface
+			# Do a wireshark capture of the traffic - Some machines have the subnet on the first some on the second network interface
 			v.customize ['modifyvm', :id, '--nictrace1', 'on']    
 			v.customize ['modifyvm', :id, '--nictrace2', 'on'] 	  
-#			v.customize ['modifyvm', :id, '--nictracefile1', "$env:SCOPE_DIR/trace1.pcap"]   
-#			v.customize ['modifyvm', :id, '--nictracefile2', "$env:SCOPE_DIR/trace2.pcap"]   
 			v.customize ['modifyvm', :id, '--nictracefile1', "$env:SCOPE_DIR_plugin\\sync\\trace1.pcap"]   
 			v.customize ['modifyvm', :id, '--nictracefile2', "$env:SCOPE_DIR_plugin\\sync\\trace2.pcap"]  
 		end
